@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Vite cache
+.vite/
+*.local
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Patch/helper scripts (not part of the app)
+add_exports.cjs
+fix_all_dupes.js
+fix_colors.js
+fix_dates.js
+fix_destructure.js
+fix_export.cjs
+fix_styles.cjs
+fix_styles.js
+inject_intelligence.js
+patch_index_features.js
+patch_store.js
+refactor.js
+revert_store.js
+update_index.js
+update_margins.js
+update_mobile_empty.js
+update_persist.js
+update_store.js
