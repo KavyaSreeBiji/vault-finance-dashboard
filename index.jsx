@@ -27,29 +27,42 @@ const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct
 /** Palette for donut chart segments and spending bars (cycles if > 8 categories). */
 const DONUT_COLORS = ["#d4a853","#f43f5e","#a78bfa","#22c55e","#38bdf8","#fb923c","#e879f9","#4ade80"];
 
+const ICONS = {
+  Lightbulb: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
+  AlertTriangle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>,
+  Siren: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M21 12h1"/><path d="M18.5 4.5 18 5"/><path d="M2 12h1"/><path d="M12 2v1"/><path d="m4.929 4.929.707.707"/><path d="M12 12v6"/></svg>,
+  Home: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Coffee: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>,
+  Car: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>,
+  ShoppingBag: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
+  CreditCard: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>,
+  TrendingUp: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
+  Plant: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>,
+  BarChart: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+};
+
 // ---------------------------------------------------------------------------
 // Formatters
 // ---------------------------------------------------------------------------
 
 /**
- * Compact Indian-locale currency formatter.
- * @param {number} n - Amount in INR (negative = expense).
- * @returns {string} e.g. "₹1.2L", "-₹42K", "₹650"
+ * Compact Indian-locale currency formatter (absolute value).
+ * @param {number} n - Amount in INR.
+ * @returns {string} e.g. "₹1.2L", "₹42K", "₹650"
  */
 const fmt = (n) => {
   const abs = Math.abs(n);
-  const sign = n < 0 ? "-" : "";
-  if (abs >= 100000) return `${sign}₹${(abs / 100000).toFixed(1)}L`;
-  if (abs >= 1000)   return `${sign}₹${(abs / 1000).toFixed(1)}K`;
-  return `${sign}₹${abs.toLocaleString("en-IN")}`;
+  if (abs >= 100000) return `₹${(abs / 100000).toFixed(1)}L`;
+  if (abs >= 1000)   return `₹${(abs / 1000).toFixed(1)}K`;
+  return `₹${abs.toLocaleString("en-IN")}`;
 };
 
 /**
- * Full Indian-locale currency formatter (no abbreviation).
+ * Full Indian-locale currency formatter (absolute value, no abbreviation).
  * @param {number} n - Amount in INR.
  * @returns {string} e.g. "₹85,000"
  */
-const fmtFull = (n) => `${n < 0 ? "-" : ""}₹${Math.abs(n).toLocaleString("en-IN")}`;
+const fmtFull = (n) => `₹${Math.abs(n).toLocaleString("en-IN")}`;
 
 // ---------------------------------------------------------------------------
 // useWindowWidth — reactive viewport-width hook
@@ -572,19 +585,22 @@ export default function App() {
     // 1. Savings rate health
     if (savingsRate >= 20) {
       insights.push({
-        emoji: "💡",
+        Icon: ICONS.Lightbulb,
+        color: DONUT_COLORS[0],
         title: "Savings rate is healthy",
         desc:  `At ${Math.round(savingsRate)}% savings rate, you're above the recommended 20% threshold. Great job!`,
       });
     } else if (savingsRate > 0) {
       insights.push({
-        emoji: "⚠️",
+        Icon: ICONS.AlertTriangle,
+        color: DONUT_COLORS[5],
         title: "Room to save more",
         desc:  `Your savings rate is ${Math.round(savingsRate)}%. Try to optimise expenses to reach the 20% goal.`,
       });
     } else {
       insights.push({
-        emoji: "🚨",
+        Icon: ICONS.Siren,
+        color: DONUT_COLORS[1],
         title: "Negative Cashflow",
         desc:  "You are spending more than you're earning. Review your recent expenses to find cutting opportunities.",
       });
@@ -593,9 +609,10 @@ export default function App() {
     // 2. Top expense category
     if (topCategory && topCategory.val > 0) {
       const pct = Math.round((topCategory.val / totalExpense) * 100);
-      const emojiMap = { Housing: "🏠", Food: "🍔", Transport: "🚗", Shopping: "🛍️" };
+      const iconMap = { Housing: ICONS.Home, Food: ICONS.Coffee, Transport: ICONS.Car, Shopping: ICONS.ShoppingBag };
       insights.push({
-        emoji: emojiMap[topCategory.cat] ?? "📊",
+        Icon: iconMap[topCategory.cat] || ICONS.BarChart,
+        color: topCategory.color,
         title: `${topCategory.cat} is your biggest expense`,
         desc:  `You spent ${fmt(-topCategory.val)} on ${topCategory.cat}, making up ${pct}% of your total expenses.`,
       });
@@ -609,7 +626,8 @@ export default function App() {
     const mostFrequent = Object.entries(freqMap).sort((a, b) => b[1] - a[1])[0];
     if (mostFrequent && mostFrequent[1] >= 3) {
       insights.push({
-        emoji: "💳",
+        Icon: ICONS.CreditCard,
+        color: DONUT_COLORS[2],
         title: `${mostFrequent[0]} spending is frequent`,
         desc:  `You had ${mostFrequent[1]} separate transactions for ${mostFrequent[0]}. Small, repeated purchases can add up!`,
       });
@@ -621,13 +639,15 @@ export default function App() {
       .reduce((acc, t) => acc + Math.abs(t.amount), 0);
     if (investedAmount > 0) {
       insights.push({
-        emoji: "📈",
+        Icon: ICONS.TrendingUp,
+        color: DONUT_COLORS[3],
         title: "You're investing regularly",
         desc:  `You've put ${fmt(-investedAmount)} towards investments. Consistent wealth-building is key!`,
       });
     } else {
       insights.push({
-        emoji: "🌱",
+        Icon: ICONS.Plant,
+        color: DONUT_COLORS[7],
         title: "Consider starting to invest",
         desc:  "You have no recorded investments. Putting even a small amount to work can grow your wealth over time.",
       });
@@ -868,7 +888,19 @@ export default function App() {
                 {today.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </div>
             </div>
-            <div className="header-actions" style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+            <div className="header-actions" style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap", alignItems: "center" }}>
+              {/* Role selector — mobile only (desktop shows it in sidebar) */}
+              {isMobile && (
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  aria-label="User role"
+                  style={{ fontSize: 12, padding: "8px 10px", borderRadius: 8, border: `1px solid ${role === "admin" ? COLORS.accent : COLORS.cardBorder}`, color: role === "admin" ? COLORS.accent : COLORS.muted, fontWeight: 600 }}
+                >
+                  <option value="admin">👑 Admin</option>
+                  <option value="viewer">👁 Viewer</option>
+                </select>
+              )}
               <button
                 onClick={toggleDarkMode}
                 aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
@@ -1047,6 +1079,55 @@ export default function App() {
                             No transactions match your filters
                           </td>
                         </tr>
+                      ) : groupBy === "category" ? (
+                        Object.entries(
+                          filtered.reduce((acc, t) => {
+                            if (!acc[t.category]) acc[t.category] = [];
+                            acc[t.category].push(t);
+                            return acc;
+                          }, {})
+                        ).map(([cat, txns]) => (
+                          <React.Fragment key={cat}>
+                            <tr style={{ background: "rgba(212,168,83,0.08)" }}>
+                              <td colSpan={role === "admin" ? 6 : 5} style={{ padding: "10px 12px", fontSize: 13, borderBottom: `1px solid ${COLORS.accent}44` }}>
+                                <span style={{ fontWeight: 600, color: COLORS.accent, letterSpacing: "0.02em" }}>{cat}</span>
+                                <span style={{ fontSize: 11, color: COLORS.muted, marginLeft: 8 }}>
+                                  — {txns.length} items (Total: {fmtFull(txns.reduce((s, t) => s + t.amount, 0))})
+                                </span>
+                              </td>
+                            </tr>
+                            {txns.map((t) => (
+                              <tr
+                                key={t.id}
+                                style={{ transition: "background 0.1s" }}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(212,168,83,0.03)")}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                              >
+                                <td style={td}>{new Date(t.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" })}</td>
+                                <td style={td}>{t.desc}</td>
+                                <td style={td}>
+                                  <span style={{ background: "rgba(212,168,83,0.1)", color: COLORS.accent, borderRadius: 6, padding: "3px 8px", fontSize: 11 }}>
+                                    {t.category}
+                                  </span>
+                                </td>
+                                <td style={td}>
+                                  <span style={{ color: t.type === "income" ? COLORS.income : COLORS.expense, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                    {t.type}
+                                  </span>
+                                </td>
+                                <td style={{ ...td, fontFamily: "'DM Mono', monospace", fontWeight: 600, color: t.amount >= 0 ? COLORS.income : COLORS.expense }}>
+                                  {fmtFull(t.amount)}
+                                </td>
+                                {role === "admin" && (
+                                  <td style={td}>
+                                    <button onClick={() => openEdit(t)} aria-label={`Edit ${t.desc}`} style={{ background: "none", border: "none", color: COLORS.muted, cursor: "pointer", fontSize: 12, marginRight: 8 }}>Edit</button>
+                                    <button onClick={() => handleDelete(t.id)} aria-label={`Delete ${t.desc}`} style={{ background: "none", border: "none", color: "#f43f5e", cursor: "pointer", fontSize: 12 }}>Del</button>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        ))
                       ) : (
                         filtered.map((t) => (
                           <tr
@@ -1147,15 +1228,20 @@ export default function App() {
                   <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 20 }}>Observations from your data</div>
                   {spendingIntelligence.length === 0 ? (
                     <div style={{ color: COLORS.muted }}>Add transactions to unlock spending insights.</div>
-                  ) : spendingIntelligence.map((obs, i) => (
-                    <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: i < 3 ? `1px solid ${COLORS.cardBorder}` : "none" }}>
-                      <div style={{ fontSize: 20 }}>{obs.emoji}</div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{obs.title}</div>
-                        <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.5 }}>{obs.desc}</div>
+                  ) : spendingIntelligence.map((obs, i) => {
+                    const { Icon } = obs;
+                    return (
+                      <div key={i} style={{ display: "flex", gap: 14, marginBottom: 16, paddingBottom: 16, borderBottom: i < 3 ? `1px solid ${COLORS.cardBorder}` : "none", alignItems: "flex-start" }}>
+                        <div style={{ padding: 8, borderRadius: 10, background: `${obs.color}15`, color: obs.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <Icon size={20} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{obs.title}</div>
+                          <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.5 }}>{obs.desc}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

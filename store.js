@@ -133,9 +133,18 @@ export const useFinanceStore = create(
 
       handleSave: () => {
         const { form, editTxn, transactions } = get();
-        if (!form.date || !form.desc || !form.amount) return;
+        
+        if (!form.date || !form.desc || !form.amount) {
+          alert("Please fill in all required fields: Date, Description, and Amount.");
+          return;
+        }
 
         const amt = form.type === "expense" ? -Math.abs(parseFloat(form.amount)) : Math.abs(parseFloat(form.amount));
+        
+        if (isNaN(amt) || parseFloat(form.amount) <= 0) {
+          alert("Please enter a valid amount greater than 0.");
+          return;
+        }
 
         if (editTxn) {
           set({
