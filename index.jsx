@@ -427,6 +427,20 @@ export default function App() {
   const viewportWidth = useWindowWidth();
   const isMobile = viewportWidth <= 768;
 
+  // Always-current date — refreshes automatically at midnight
+  const [today, setToday] = useState(new Date());
+  useEffect(() => {
+    const msUntilMidnight = () => {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+    };
+    let timer = setTimeout(function tick() {
+      setToday(new Date());
+      timer = setTimeout(tick, msUntilMidnight());
+    }, msUntilMidnight());
+    return () => clearTimeout(timer);
+  }, []);
+
   // ── Derived / memoised values ─────────────────────────────────────────────
 
   /** Total income across all transactions. */
@@ -851,7 +865,7 @@ export default function App() {
                 {activeTab === "insights"     && "Insights"}
               </h1>
               <div className="page-header-date" style={{ fontSize: 13, color: COLORS.muted, marginTop: 2 }}>
-                {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                {today.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </div>
             </div>
             <div className="header-actions" style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
