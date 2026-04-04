@@ -52,6 +52,26 @@ const fmt = (n) => {
 const fmtFull = (n) => `${n < 0 ? "-" : ""}₹${Math.abs(n).toLocaleString("en-IN")}`;
 
 // ---------------------------------------------------------------------------
+// useWindowWidth — reactive viewport-width hook
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the current window inner width, updated on resize.
+ * Used to drive mobile-responsive inline styles.
+ */
+function useWindowWidth() {
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return width;
+}
+
+// ---------------------------------------------------------------------------
 // SpendingBar
 // ---------------------------------------------------------------------------
 
@@ -403,6 +423,10 @@ export default function App() {
   const toggleDarkMode = useFinanceStore((s) => s.toggleDarkMode);
   const COLORS        = darkMode ? DARK_COLORS : LIGHT_COLORS;
 
+  // Responsive layout
+  const viewportWidth = useWindowWidth();
+  const isMobile = viewportWidth <= 768;
+
   // ── Derived / memoised values ─────────────────────────────────────────────
 
   /** Total income across all transactions. */
@@ -681,14 +705,29 @@ export default function App() {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${COLORS.cardBorder}; border-radius: 4px; }
         @media (max-width: 768px) {
-          .summary-grid { grid-template-columns: 1fr !important; }
+          .summary-grid { grid-template-columns: 1fr 1fr !important; }
           .chart-row    { grid-template-columns: 1fr !important; }
           .insights-row { grid-template-columns: 1fr !important; }
           .sidebar      { display: none !important; }
           .mobile-tabs  { display: flex !important; }
-          .main-content { padding: 16px !important; margin-left: 0 !important; }
-          .txn-table-wrap { overflow-x: auto; }
+          .main-content { padding: 12px 12px 80px !important; margin-left: 0 !important; }
+          .txn-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .txn-table-wrap table { min-width: 520px; }
           .hide-mobile  { display: none !important; }
+          .page-header  { flex-wrap: wrap; gap: 10px !important; margin-bottom: 18px !important; }
+          .page-header h1 { font-size: 20px !important; }
+          .page-header-date { font-size: 11px !important; }
+          .header-actions { flex-wrap: wrap; gap: 8px !important; }
+          .filter-bar { flex-direction: column !important; gap: 8px !important; }
+          .filter-bar input { width: 100% !important; min-width: unset !important; }
+          .filter-bar select { width: 100% !important; }
+          .filter-bar-row2 { display: flex !important; gap: 8px; flex-wrap: wrap; }
+          .export-btns { display: flex !important; gap: 6px; }
+          .spending-grid { grid-template-columns: 1fr !important; }
+          .spending-bar-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
+        }
+        @media (max-width: 400px) {
+          .summary-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
@@ -785,26 +824,41 @@ export default function App() {
         <main
           className="main-content"
           aria-label="Dashboard content"
-          style={{ flex: 1, marginLeft: 220, padding: "32px 36px", paddingBottom: 60 }}
+          style={{
+            flex: 1,
+            marginLeft: isMobile ? 0 : 220,
+            padding: isMobile ? "12px 12px" : "32px 36px",
+            paddingBottom: isMobile ? 80 : 60,
+            minWidth: 0,
+            maxWidth: "100vw",
+            overflowX: "hidden",
+          }}
         >
 
           {/* Page header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+          <div className="page-header" style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: isMobile ? "flex-start" : "center",
+            flexWrap: isMobile ? "wrap" : "nowrap",
+            gap: isMobile ? 10 : 0,
+            marginBottom: isMobile ? 16 : 32,
+          }}>
             <div>
-              <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", margin: 0 }}>
+              <h1 className="page-header-title" style={{ fontFamily: "'Playfair Display', serif", fontSize: isMobile ? 20 : 26, fontWeight: 700, letterSpacing: "-0.02em", margin: 0 }}>
                 {activeTab === "dashboard"    && "Financial Overview"}
                 {activeTab === "transactions" && "Transactions"}
                 {activeTab === "insights"     && "Insights"}
               </h1>
-              <div style={{ fontSize: 13, color: COLORS.muted, marginTop: 2 }}>
+              <div className="page-header-date" style={{ fontSize: 13, color: COLORS.muted, marginTop: 2 }}>
                 {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 12 }}>
+            <div className="header-actions" style={{ display: "flex", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
               <button
                 onClick={toggleDarkMode}
                 aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-                style={{ background: COLORS.card, color: COLORS.text, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                style={{ background: COLORS.card, color: COLORS.text, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}
               >
                 {darkMode ? "☀️ Light" : "🌙 Dark"}
               </button>
@@ -812,9 +866,9 @@ export default function App() {
                 <button
                   onClick={openAdd}
                   aria-label="Add new transaction"
-                  style={{ background: COLORS.accent, color: "#ffffff", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                  style={{ background: COLORS.accent, color: "#ffffff", border: "none", borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}
                 >
-                  + Add Transaction
+                  + Add
                 </button>
               )}
             </div>
@@ -824,7 +878,7 @@ export default function App() {
           {activeTab === "dashboard" && (
             <div className="fade-in">
               {/* Summary cards */}
-              <div className="summary-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 28 }}>
+              <div className="summary-grid" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
                 {[
                   { label: "Total Balance",   value: balance,       color: balance >= 0 ? COLORS.income : COLORS.expense, sub: "Current standing" },
                   { label: "Total Income",    value: totalIncome,   color: COLORS.income,  sub: "All time" },
@@ -840,7 +894,7 @@ export default function App() {
               </div>
 
               {/* Charts row */}
-              <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 16, marginBottom: 24 }}>
+              <div className="chart-row" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 340px", gap: 16, marginBottom: 24 }}>
                 <div className="card-hover" style={cardStyle}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Balance Trend</div>
                   <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 16 }}>Monthly net balance</div>
@@ -879,7 +933,7 @@ export default function App() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Top Spending Categories</div>
                 <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 20 }}>Your biggest expense areas</div>
                 {catBreakdown.length > 0 ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 48px" }}>
+                  <div className="spending-bar-grid" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 0 : "0 48px" }}>
                     {catBreakdown.slice(0, 8).map((c, i) => (
                       <SpendingBar key={c.cat} category={c.cat} amount={-c.val} max={catBreakdown[0].val} color={DONUT_COLORS[i % DONUT_COLORS.length]} />
                     ))}
@@ -895,13 +949,20 @@ export default function App() {
           {activeTab === "transactions" && (
             <div className="fade-in">
               {/* Filter bar */}
-              <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
+              <div className="filter-bar" style={{
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                gap: isMobile ? 8 : 10,
+                marginBottom: 16,
+                flexWrap: isMobile ? "nowrap" : "wrap",
+                alignItems: isMobile ? "stretch" : "center",
+              }}>
                 <input
                   placeholder="Search transactions..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   aria-label="Search transactions"
-                  style={{ flex: 1, minWidth: 200 }}
+                  style={{ flex: 1, minWidth: 180 }}
                 />
                 <select value={filterType} onChange={(e) => setFilterType(e.target.value)} aria-label="Filter by type">
                   <option value="all">All Types</option>
@@ -912,27 +973,29 @@ export default function App() {
                   <option value="all">All Categories</option>
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
-                <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} aria-label="Filter by month">
-                  <option value="all">All Months</option>
-                  {uniqueMonths.map((m) => (
-                    <option key={m} value={m}>
-                      {new Date(`${m}-01`).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
-                    </option>
-                  ))}
-                </select>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: COLORS.text }}>
-                  <input
-                    type="checkbox"
-                    id="grp"
-                    checked={groupBy === "category"}
-                    onChange={(e) => setGroupBy(e.target.checked ? "category" : "none")}
-                    aria-label="Group by category"
-                  />
-                  <label htmlFor="grp" style={{ cursor: "pointer" }}>Group</label>
-                </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => exportData("csv")}  aria-label="Export as CSV"  style={btnStyle()}>⬇ CSV</button>
-                  <button onClick={() => exportData("json")} aria-label="Export as JSON" style={btnStyle()}>⬇ JSON</button>
+                <div className="filter-bar-row2" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", width: "100%" }}>
+                  <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} aria-label="Filter by month" style={{ flex: 1, minWidth: 120 }}>
+                    <option value="all">All Months</option>
+                    {uniqueMonths.map((m) => (
+                      <option key={m} value={m}>
+                        {new Date(`${m}-01`).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: COLORS.text, flexShrink: 0 }}>
+                    <input
+                      type="checkbox"
+                      id="grp"
+                      checked={groupBy === "category"}
+                      onChange={(e) => setGroupBy(e.target.checked ? "category" : "none")}
+                      aria-label="Group by category"
+                    />
+                    <label htmlFor="grp" style={{ cursor: "pointer" }}>Group</label>
+                  </div>
+                  <div className="export-btns" style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button onClick={() => exportData("csv")}  aria-label="Export as CSV"  style={btnStyle()}>⬇ CSV</button>
+                    <button onClick={() => exportData("json")} aria-label="Export as JSON" style={btnStyle()}>⬇ JSON</button>
+                  </div>
                 </div>
               </div>
 
@@ -1013,7 +1076,7 @@ export default function App() {
           {activeTab === "insights" && (
             <div className="fade-in">
               {/* KPI cards */}
-              <div className="insights-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
+              <div className="insights-row" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}>
                 <div className="card-hover" style={{ ...cardStyle, borderLeft: `3px solid ${COLORS.accent}` }}>
                   <div style={{ fontSize: 11, color: COLORS.muted, letterSpacing: "0.08em", marginBottom: 6 }}>TOP EXPENSE CATEGORY</div>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: COLORS.accent }}>{topCategory?.cat || "—"}</div>
@@ -1036,7 +1099,7 @@ export default function App() {
               </div>
 
               {/* Monthly comparison + Spending Intelligence */}
-              <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+              <div className="chart-row" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 20 }}>
                 <div className="card-hover" style={cardStyle}>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Monthly Comparison</div>
                   <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 20 }}>Income vs Expenses</div>
