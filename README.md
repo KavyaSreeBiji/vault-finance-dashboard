@@ -2,7 +2,10 @@
 
 > A modern, feature-rich personal finance tracker built with **React 19**, **Zustand**, and **Vite**. Track income and expenses, visualise spending trends, export data, and switch between admin and read-only roles — all in a polished dark/light mode UI.
 
+**Live Demo:** [vault-finance-dashboard-lilac.vercel.app](https://vault-finance-dashboard-lilac.vercel.app/)
+
 ---
+
 
 ## Quick Start
 
@@ -83,7 +86,7 @@ One-click toggle in the top-right corner. Theme preference is persisted across b
 
 ---
 
-## 🏗️ Approach & Architecture
+## Approach & Architecture
 
 ### State Management — Zustand
 All application state lives in a single Zustand store (`store.js`) using the `persist` middleware to sync selected state to `localStorage`.
