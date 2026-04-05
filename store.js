@@ -165,12 +165,20 @@ export const useFinanceStore = create(
     }),
     {
       name: 'finance-dashboard-storage',
+      version: 1,
       partialize: (state) => ({
         activeTab: state.activeTab,
         darkMode: state.darkMode,
         role: state.role,
         transactions: state.transactions
       }),
+      migrate: (persisted, version) => {
+        // If upgrading from v0 or transactions list is empty, seed with initial data
+        if (!version || version < 1 || !persisted.transactions || persisted.transactions.length === 0) {
+          return { ...persisted, transactions: INITIAL_TXN };
+        }
+        return persisted;
+      },
     }
   )
 );

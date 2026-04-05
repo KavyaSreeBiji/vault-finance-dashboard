@@ -17,390 +17,20 @@ import React, { useState, useEffect, useRef, useMemo, Component } from "react";
 import PropTypes from "prop-types";
 import { useFinanceStore, CATEGORIES, DARK_COLORS, LIGHT_COLORS } from "./store.js";
 
+import { ICONS } from "./components/icons.jsx";
+import { fmt, fmtFull } from "./utils/formatters.js";
+import { useWindowWidth } from "./hooks/useWindowWidth.js";
+import { SpendingBar } from "./components/SpendingBar.jsx";
+import { TrendChart } from "./components/TrendChart.jsx";
+import { DonutChart } from "./components/DonutChart.jsx";
+import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Month abbreviations used by the canvas chart axis labels. */
-const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
 /** Palette for donut chart segments and spending bars (cycles if > 8 categories). */
 const DONUT_COLORS = ["#d4a853","#f43f5e","#a78bfa","#22c55e","#38bdf8","#fb923c","#e879f9","#4ade80"];
-
-const ICONS = {
-  Lightbulb: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.9 1.2 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>,
-  AlertTriangle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>,
-  Siren: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M7 18v-6a5 5 0 1 1 10 0v6"/><path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M21 12h1"/><path d="M18.5 4.5 18 5"/><path d="M2 12h1"/><path d="M12 2v1"/><path d="m4.929 4.929.707.707"/><path d="M12 12v6"/></svg>,
-  Home: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  Coffee: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>,
-  Car: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>,
-  ShoppingBag: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
-  CreditCard: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>,
-  TrendingUp: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
-  Plant: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>,
-  BarChart: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-};
-
-// ---------------------------------------------------------------------------
-// Formatters
-// ---------------------------------------------------------------------------
-
-/**
- * Compact Indian-locale currency formatter (absolute value).
- * @param {number} n - Amount in INR.
- * @returns {string} e.g. "₹1.2L", "₹42K", "₹650"
- */
-const fmt = (n) => {
-  const abs = Math.abs(n);
-  if (abs >= 100000) return `₹${(abs / 100000).toFixed(1)}L`;
-  if (abs >= 1000)   return `₹${(abs / 1000).toFixed(1)}K`;
-  return `₹${abs.toLocaleString("en-IN")}`;
-};
-
-/**
- * Full Indian-locale currency formatter (absolute value, no abbreviation).
- * @param {number} n - Amount in INR.
- * @returns {string} e.g. "₹85,000"
- */
-const fmtFull = (n) => `₹${Math.abs(n).toLocaleString("en-IN")}`;
-
-// ---------------------------------------------------------------------------
-// useWindowWidth — reactive viewport-width hook
-// ---------------------------------------------------------------------------
-
-/**
- * Returns the current window inner width, updated on resize.
- * Used to drive mobile-responsive inline styles.
- */
-function useWindowWidth() {
-  const [width, setWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1200
-  );
-  useEffect(() => {
-    const handler = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
-  return width;
-}
-
-// ---------------------------------------------------------------------------
-// SpendingBar
-// ---------------------------------------------------------------------------
-
-/**
- * Animated horizontal progress bar representing spending in a single category.
- *
- * @param {object} props
- * @param {string} props.category - Category label.
- * @param {number} props.amount   - Spend amount (should be negative for expenses).
- * @param {number} props.max      - Maximum value (used to compute percentage width).
- * @param {string} props.color    - Bar fill colour (hex).
- */
-function SpendingBar({ category, amount, max, color }) {
-  const COLORS = useFinanceStore((s) => s.darkMode ? DARK_COLORS : LIGHT_COLORS);
-  const pct = max > 0 ? Math.round((Math.abs(amount) / max) * 100) : 0;
-
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ fontSize: 13, color: COLORS.text }}>{category}</span>
-        <span style={{ fontSize: 13, color: COLORS.muted }}>{fmt(amount)}</span>
-      </div>
-      <div
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${category} spending: ${pct}%`}
-        style={{ height: 5, background: COLORS.cardBorder, borderRadius: 3, overflow: "hidden" }}
-      >
-        <div
-          style={{
-            height: "100%",
-            width: `${pct}%`,
-            background: color,
-            borderRadius: 3,
-            transition: "width 0.8s cubic-bezier(0.4,0,0.2,1)",
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-SpendingBar.propTypes = {
-  category: PropTypes.string.isRequired,
-  amount:   PropTypes.number.isRequired,
-  max:      PropTypes.number.isRequired,
-  color:    PropTypes.string.isRequired,
-};
-
-// ---------------------------------------------------------------------------
-// TrendChart
-// ---------------------------------------------------------------------------
-
-/**
- * Canvas line chart showing monthly net balance trend.
- *
- * @param {object}   props
- * @param {object[]} props.data         - Array of monthly data points.
- * @param {string}   props.data[].date  - ISO date string ("YYYY-MM-DD").
- * @param {number}   props.data[].balance - Net balance for that month.
- */
-function TrendChart({ data }) {
-  const COLORS = useFinanceStore((s) => s.darkMode ? DARK_COLORS : LIGHT_COLORS);
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !data.length) return;
-
-    const ctx = canvas.getContext("2d");
-    const W = canvas.offsetWidth;
-    const H = canvas.offsetHeight;
-    canvas.width  = W * 2;
-    canvas.height = H * 2;
-    ctx.scale(2, 2);
-    ctx.clearRect(0, 0, W, H);
-
-    const pad = { t: 20, r: 20, b: 40, l: 60 };
-    const chartW = W - pad.l - pad.r;
-    const chartH = H - pad.t - pad.b;
-    const maxVal = Math.max(...data.map((d) => d.balance));
-    const minVal = Math.min(...data.map((d) => d.balance));
-    const range  = maxVal - minVal || 1;
-
-    const xScale = (i) => pad.l + (i / (data.length - 1)) * chartW;
-    const yScale = (v) => pad.t + chartH - ((v - minVal) / range) * chartH;
-
-    // Grid lines
-    ctx.strokeStyle = COLORS.cardBorder;
-    ctx.lineWidth   = 0.5;
-    ctx.setLineDash([4, 4]);
-    for (let i = 0; i <= 4; i++) {
-      const v = minVal + (range / 4) * i;
-      const y = yScale(v);
-      ctx.beginPath();
-      ctx.moveTo(pad.l, y);
-      ctx.lineTo(W - pad.r, y);
-      ctx.stroke();
-      ctx.fillStyle   = COLORS.muted;
-      ctx.font        = "11px 'DM Mono', monospace";
-      ctx.textAlign   = "right";
-      ctx.fillText(fmt(v), pad.l - 8, y + 4);
-    }
-
-    // X-axis labels
-    ctx.setLineDash([]);
-    data.forEach((d, i) => {
-      ctx.fillStyle = COLORS.muted;
-      ctx.font      = "11px 'DM Mono', monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(MONTH_LABELS[new Date(d.date).getMonth()], xScale(i), H - pad.b + 16);
-    });
-
-    // Fill gradient below line
-    const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
-    grad.addColorStop(0, "rgba(212,168,83,0.25)");
-    grad.addColorStop(1, "rgba(212,168,83,0)");
-    ctx.beginPath();
-    data.forEach((d, i) => {
-      const x = xScale(i), y = yScale(d.balance);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.lineTo(xScale(data.length - 1), H - pad.b);
-    ctx.lineTo(xScale(0), H - pad.b);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Line
-    ctx.beginPath();
-    data.forEach((d, i) => {
-      const x = xScale(i), y = yScale(d.balance);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.strokeStyle = COLORS.accent;
-    ctx.lineWidth   = 2;
-    ctx.lineJoin    = "round";
-    ctx.stroke();
-
-    // Data-point dots
-    data.forEach((d, i) => {
-      ctx.beginPath();
-      ctx.arc(xScale(i), yScale(d.balance), 4, 0, Math.PI * 2);
-      ctx.fillStyle   = COLORS.accent;
-      ctx.fill();
-      ctx.strokeStyle = COLORS.bg;
-      ctx.lineWidth   = 2;
-      ctx.stroke();
-    });
-  }, [data, COLORS]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-label="Monthly balance trend chart"
-      role="img"
-      style={{ width: "100%", height: "100%", display: "block" }}
-    />
-  );
-}
-
-TrendChart.propTypes = {
-  data: PropTypes.arrayOf(
-    PropTypes.shape({
-      date:    PropTypes.string.isRequired,
-      balance: PropTypes.number.isRequired,
-    })
-  ).isRequired,
-};
-
-// ---------------------------------------------------------------------------
-// DonutChart
-// ---------------------------------------------------------------------------
-
-/**
- * Canvas donut chart for category spending breakdown.
- *
- * @param {object}   props
- * @param {object[]} props.segments         - Array of segments.
- * @param {string}   props.segments[].label - Category name.
- * @param {number}   props.segments[].value - Spend value (positive).
- * @param {string}   props.segments[].color - Hex colour.
- */
-function DonutChart({ segments }) {
-  const COLORS = useFinanceStore((s) => s.darkMode ? DARK_COLORS : LIGHT_COLORS);
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !segments.length) return;
-
-    const S   = 200;
-    canvas.width  = S * 2;
-    canvas.height = S * 2;
-    const ctx = canvas.getContext("2d");
-    ctx.scale(2, 2);
-
-    const cx = S / 2, cy = S / 2, r = 70, inner = 48;
-    const total = segments.reduce((a, s) => a + Math.abs(s.value), 0);
-    let angle = -Math.PI / 2;
-
-    segments.forEach((seg) => {
-      const slice = (Math.abs(seg.value) / total) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, angle, angle + slice);
-      ctx.closePath();
-      ctx.fillStyle = seg.color;
-      ctx.fill();
-      angle += slice;
-    });
-
-    // Inner circle (hole)
-    ctx.beginPath();
-    ctx.arc(cx, cy, inner, 0, Math.PI * 2);
-    ctx.fillStyle = COLORS.card;
-    ctx.fill();
-
-    // Centre label
-    ctx.fillStyle  = COLORS.text;
-    ctx.font       = "bold 14px 'Playfair Display', serif";
-    ctx.textAlign  = "center";
-    ctx.fillText(fmt(-total), cx, cy + 5);
-  }, [segments, COLORS]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-label="Spending breakdown donut chart"
-      role="img"
-      style={{ width: 200, height: 200 }}
-    />
-  );
-}
-
-DonutChart.propTypes = {
-  segments: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string.isRequired,
-      value: PropTypes.number.isRequired,
-      color: PropTypes.string.isRequired,
-    })
-  ).isRequired,
-};
-
-// ---------------------------------------------------------------------------
-// ErrorBoundary
-// ---------------------------------------------------------------------------
-
-/**
- * Class-based error boundary that catches render errors in its subtree.
- * Displays a minimal fallback UI instead of crashing the entire page.
- */
-export class ErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, info) {
-    console.error("[ErrorBoundary]", error, info.componentStack);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div role="alert" style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0f0f11",
-          color: "#f4f4f5",
-          fontFamily: "'DM Sans', sans-serif",
-          gap: 12,
-          padding: 32,
-          textAlign: "center",
-        }}>
-          <div style={{ fontSize: 40 }}>⚠️</div>
-          <div style={{ fontSize: 20, fontWeight: 600 }}>Something went wrong</div>
-          <div style={{ fontSize: 13, color: "#71717a", maxWidth: 420 }}>
-            {this.state.error?.message || "An unexpected error occurred."}
-          </div>
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            style={{
-              marginTop: 8,
-              background: "#d4a853",
-              color: "#0f0f11",
-              border: "none",
-              borderRadius: 10,
-              padding: "10px 24px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-ErrorBoundary.propTypes = {
-  children: PropTypes.node.isRequired,
-};
 
 // ---------------------------------------------------------------------------
 // App
@@ -897,16 +527,19 @@ export default function App() {
                   aria-label="User role"
                   style={{ fontSize: 12, padding: "8px 10px", borderRadius: 8, border: `1px solid ${role === "admin" ? COLORS.accent : COLORS.cardBorder}`, color: role === "admin" ? COLORS.accent : COLORS.muted, fontWeight: 600 }}
                 >
-                  <option value="admin">👑 Admin</option>
-                  <option value="viewer">👁 Viewer</option>
+                  <option value="admin">Admin</option>
+                  <option value="viewer">Viewer</option>
                 </select>
               )}
               <button
                 onClick={toggleDarkMode}
                 aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-                style={{ background: COLORS.card, color: COLORS.text, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 10, padding: "10px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap" }}
+                style={{ background: COLORS.card, color: COLORS.text, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 10, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}
               >
-                {darkMode ? "☀️ Light" : "🌙 Dark"}
+                {darkMode
+                  ? <><ICONS.Sun size={15} style={{ flexShrink: 0 }} /><span>Light</span></>
+                  : <><ICONS.Moon size={15} style={{ flexShrink: 0 }} /><span>Dark</span></>
+                }
               </button>
               {role === "admin" && activeTab === "transactions" && (
                 <button
@@ -959,11 +592,16 @@ export default function App() {
                       <div style={{ display: "flex", justifyContent: "center" }}>
                         <DonutChart segments={donutSegments} />
                       </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: 8 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
                         {donutSegments.map((s) => (
-                          <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: COLORS.muted }}>
-                            <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, display: "inline-block" }} />
-                            {s.label}
+                          <div key={s.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, display: "inline-block", flexShrink: 0 }} />
+                              <span style={{ fontSize: 12, color: COLORS.muted }}>{s.label}</span>
+                            </div>
+                            <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", fontWeight: 600, color: COLORS.text }}>
+                              {fmt(-Math.abs(s.value))}
+                            </span>
                           </div>
                         ))}
                       </div>
